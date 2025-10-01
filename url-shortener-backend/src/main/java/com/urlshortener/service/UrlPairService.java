@@ -1,5 +1,6 @@
 package com.urlshortener.service;
 
+import com.urlshortener.exception.AliasAlreadyExistsException;
 import com.urlshortener.exception.AliasNotFoundException;
 import com.urlshortener.model.UrlPair;
 import com.urlshortener.repository.UrlPairRepository;
@@ -23,15 +24,22 @@ public class UrlPairService {
   }
 
   public String shortenUrl(String alias, String fullUrl) {
-    String customAlias;
-    if (alias == null || alias.trim().isEmpty()) {
-      customAlias = generateAlias();
-    } else {
-      customAlias = alias.trim();
+    String customAlias = determineAlias(alias);
+
+    if (urlPairRepository.existsByAlias(alias)) {
+      throw new AliasAlreadyExistsException(alias);
     }
+
     urlPairRepository.save(new UrlPair(customAlias, fullUrl));
 
     return customAlias;
+  }
+
+  private String determineAlias(String customAlias) {
+    if (customAlias != null && !customAlias.trim().isEmpty()) {
+      return customAlias.trim();
+    }
+    return generateAlias();
   }
 
   private String generateAlias() {
