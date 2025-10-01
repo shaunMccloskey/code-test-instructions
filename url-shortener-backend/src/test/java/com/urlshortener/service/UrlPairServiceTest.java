@@ -1,0 +1,112 @@
+package com.urlshortener.service;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import com.urlshortener.exception.AliasNotFoundException;
+import com.urlshortener.model.UrlPair;
+import com.urlshortener.model.dto.ShortenUrlRequest;
+import com.urlshortener.model.dto.ShortenUrlResponse;
+import com.urlshortener.model.dto.UrlListResponse;
+import com.urlshortener.repository.UrlPairRepository;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class UrlPairServiceTest {
+
+  @Mock private UrlPairRepository urlPairRepository;
+
+  private UrlPairService urlPairService;
+
+  private final int aliasLength = 6;
+
+  private final String baseUrl = "http://localhost:8080";
+
+  @BeforeEach
+  void setUp() {
+    urlPairService = new UrlPairService(aliasLength, urlPairRepository, baseUrl);
+  }
+
+  @Test
+  void shortenUrl_whenCustomAlias_returnAlias() {
+    ShortenUrlRequest request = new ShortenUrlRequest("https://example.com", "custom");
+    ShortenUrlResponse result = urlPairService.shortenUrl(request);
+    assertEquals("http://localhost:8080/custom", result.getShortUrl());
+  }
+
+  @Test
+  void shortenUrl_whenNullCustomAlias_returnAlias() {
+    ShortenUrlRequest request = new ShortenUrlRequest("https://example.com", null);
+    when(urlPairRepository.existsByAlias(anyString())).thenReturn(false);
+    ShortenUrlResponse result = urlPairService.shortenUrl(request);
+    assertTrue(result.getShortUrl().contains(baseUrl));
+    assertEquals(result.getShortUrl().length(), baseUrl.length() + 7);
+  }
+
+  @Test
+  void shortenUrl_whenEmptyCustomAlias_returnAlias() {
+    ShortenUrlRequest request = new ShortenUrlRequest("https://example.com", "");
+    when(urlPairRepository.existsByAlias(anyString())).thenReturn(false);
+    ShortenUrlResponse result = urlPairService.shortenUrl(request);
+    assertNotNull(result.getShortUrl());
+    assertTrue(result.getShortUrl().startsWith("http://localhost:8080/"));
+    verify(urlPairRepository).save(any(UrlPair.class));
+  }
+
+  @Test
+  void shortenUrl_whenEmptyCustomAliasConflict_returnAlias() {
+    ShortenUrlRequest request = new ShortenUrlRequest("https://example.com", "");
+    when(urlPairRepository.existsByAlias(anyString())).thenReturn(true);
+    assertThrows(RuntimeException.class, () -> urlPairService.shortenUrl(request));
+  }
+
+  @Test
+  void getUrlPairByAlias_whenAliasExists_returnAlias() {
+    UrlPair urlPairExample = new UrlPair("test", "http://example.com");
+    when(urlPairRepository.findByAlias("test")).thenReturn(Optional.of(urlPairExample));
+    UrlPair result = urlPairService.getUrlPairByAlias("test");
+    assertEquals(urlPairExample, result);
+  }
+
+  @Test
+  void getUrlPairByAlias_whenAliasDoesNotExists_return() {
+    when(urlPairRepository.findByAlias("test")).thenReturn(Optional.empty());
+    assertThrows(AliasNotFoundException.class, () -> urlPairService.getUrlPairByAlias("test"));
+  }
+
+  @Test
+  void deleteUrlPair_whenAliasExists_returnAlias() {
+    when(urlPairRepository.existsByAlias("test")).thenReturn(true);
+    urlPairService.deleteUrlPair("test");
+    verify(urlPairRepository).deleteByAlias("test");
+  }
+
+  @Test
+  void deleteUrlPair_whenAliasDoesNotExists_return() {
+    when(urlPairRepository.existsByAlias("not_there")).thenReturn(false);
+    assertThrows(AliasNotFoundException.class, () -> urlPairService.deleteUrlPair("not_there"));
+  }
+
+  @Test
+  void getAllUrls_whenAliasExist_returnFullList() {
+    List<UrlPair> urls =
+        List.of(
+            new UrlPair("first", "http://example.com"),
+            new UrlPair("second", "http://example.test.com"));
+    when(urlPairRepository.findAll()).thenReturn(urls);
+
+    List<UrlListResponse> result = urlPairService.getAllUrls();
+
+    assertEquals(2, result.size());
+    assertEquals("first", result.get(0).getAlias());
+    assertEquals("http://example.com", result.get(0).getFullUrl());
+    assertEquals("second", result.get(1).getAlias());
+    assertEquals("http://localhost:8080/second", result.get(1).getShortUrl());
+  }
+}
