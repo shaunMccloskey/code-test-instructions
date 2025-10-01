@@ -22,7 +22,7 @@ public class UrlPairService {
       customAlias = generateAlias();
     }
 
-    return "";
+    return customAlias;
   }
 
   private String generateAlias() {
