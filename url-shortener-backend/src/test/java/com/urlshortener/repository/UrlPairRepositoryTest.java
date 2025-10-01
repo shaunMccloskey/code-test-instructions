@@ -40,17 +40,66 @@ public class UrlPairRepositoryTest {
   }
 
   @Test
-  void findByAlias_whenAliasExist_returnsUrlPair() {}
+  void findByAlias_whenAliasExist_returnsUrlPair() {
+    UrlPair urlPair = new UrlPair("site", "https://example.com");
+    urlPairRepository.save(urlPair);
+
+    Optional<UrlPair> result = urlPairRepository.findByAlias("site");
+
+    assertTrue(result.isPresent());
+    assertEquals("site", result.get().getAlias());
+    assertEquals("https://example.com", result.get().getUrl());
+  }
 
   @Test
-  void existsByAlias_whenAliasDoesNotExist_returnFalse() {}
+  void existsByAlias_whenAliasDoesNotExist_returnFalse() {
+    UrlPair urlPair = new UrlPair("site", "https://example.com");
+    urlPairRepository.save(urlPair);
+
+    boolean result = urlPairRepository.existsByAlias("nope");
+
+    assertFalse(result);
+  }
 
   @Test
-  void existsByAlias_whenAliasExists_returnTrue() {}
+  void existsByAlias_whenAliasExists_returnTrue() {
+    UrlPair urlPairGift = new UrlPair("gift", "https://example.gift.com");
+    urlPairRepository.save(urlPairGift);
+    UrlPair urlPairHide = new UrlPair("hide", "https://example.hide.com");
+    urlPairRepository.save(urlPairHide);
+
+    boolean result = urlPairRepository.existsByAlias("gift");
+
+    assertTrue(result);
+  }
 
   @Test
-  void deleteByAlias_whenAliasDoesNotExist_will() {}
+  void deleteByAlias_whenAliasDoesNotExist_will() {
+    UrlPair urlPairHide = new UrlPair("hide", "https://example.hide.com");
+    urlPairRepository.save(urlPairHide);
+    long initialCount = urlPairRepository.count();
+
+    urlPairRepository.deleteByAlias("gift");
+
+    assertEquals(initialCount, urlPairRepository.count());
+    assertTrue(urlPairRepository.existsByAlias("hide"));
+    assertTrue(urlPairRepository.findByAlias("hide").isPresent());
+  }
 
   @Test
-  void deleteByAlias_whenAliasExists_deleteSucessfully() {}
+  void deleteByAlias_whenAliasExists_deleteSucessfully() {
+    UrlPair urlPairHide = new UrlPair("hide", "https://example.hide.com");
+    urlPairRepository.save(urlPairHide);
+    UrlPair urlPairGift = new UrlPair("gift", "https://example.gift.com");
+    urlPairRepository.save(urlPairGift);
+    long initialCount = urlPairRepository.count();
+
+    urlPairRepository.deleteByAlias("gift");
+
+    assertEquals(initialCount - 1, urlPairRepository.count());
+    assertTrue(urlPairRepository.existsByAlias("hide"));
+    assertTrue(urlPairRepository.findByAlias("hide").isPresent());
+    assertFalse(urlPairRepository.existsByAlias("gift"));
+    assertFalse(urlPairRepository.findByAlias("gift").isPresent());
+  }
 }

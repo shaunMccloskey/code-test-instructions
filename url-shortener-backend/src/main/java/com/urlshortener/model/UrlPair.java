@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "url_pair")
 public class UrlPair {
 
-  @Id private long id;
+  @Id private String id;
 
   @Indexed(unique = true)
   private String alias;
