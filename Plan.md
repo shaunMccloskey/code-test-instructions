@@ -12,6 +12,27 @@ and the nature of the application and how it handles scale decided to use noSQL 
 
 For each of the frontend and back end can docker the applications and use docker compose to deploy them both with simple mongo DB image.
 
+folder structure 
+/url-shortener-backend
+ | - spring application dockerized
+/url-shortener-frontend
+ | - react application dockerized
+docker-compose.yml - builds the mongoDB, backend and front end, connect network and define env variables
+
+### Implementation details
+model - urlPair will store the alias and url 
+repository - will need to be able to pull object by alias, check pre existing alias as they must be unique and delete by alias.
+
+
+
+
+code quality and linters
+use spotless with google standards, add to the pom so that can run check to test if styleing matches and apply to update code to match standards.
+added as pre commit hook to the project, any commits will auto run the check and fail if not matching.
+
+
+
+
 ### tests
 spring application will need to test the controller, service and repository layer as well as some integration tests.
 
@@ -25,9 +46,7 @@ start with the data layer and work back
 
 ## TODO
 observability
-lombok on spring
 testing reports
-code quality and linters
 security
 splitting environments, dev vs production
 

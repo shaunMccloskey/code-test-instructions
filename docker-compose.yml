@@ -1,7 +1,24 @@
-version: '3.8'
-
-
 services:
+  mongodb:
+    image: mongo:7.0
+    container_name: url-shortener-mongodb
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=urlshortener
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - url-shortener-network
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   backend:
     build:
       context: ./url-shortener-backend
@@ -11,6 +28,7 @@ services:
     environment:
       - SERVER_PORT=8080
       - BASE_URL=http://localhost:8080
+      - MONGODB_URI=mongodb://mongodb:27017/urlshortener
     ports:
       - "8080:8080"
     networks:
@@ -22,6 +40,9 @@ services:
       retries: 3
       start_period: 60s
 
+volumes:
+  mongodb_data:
+    driver: local
 
 networks:
   url-shortener-network:
