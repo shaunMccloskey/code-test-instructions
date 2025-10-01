@@ -1,6 +1,6 @@
 package com.urlshortener.service;
 
-import com.urlshortener.exception.AliasAlreadyExistsException;
+import com.urlshortener.exception.AliasNotFoundException;
 import com.urlshortener.model.UrlPair;
 import com.urlshortener.repository.UrlPairRepository;
 import java.security.SecureRandom;
@@ -58,11 +58,14 @@ public class UrlPairService {
   public UrlPair getUrlPairByAlias(String alias) {
     return urlPairRepository
         .findByAlias(alias)
-        .orElseThrow(() -> new AliasAlreadyExistsException(alias));
+        .orElseThrow(() -> new AliasNotFoundException(alias));
   }
 
   //        | - helper delete url
   public void deleteUrlPair(String alias) {
+    if (!urlPairRepository.existsByAlias(alias)) {
+      throw new AliasNotFoundException(alias);
+    }
     urlPairRepository.deleteByAlias(alias);
   }
 
