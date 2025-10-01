@@ -2,6 +2,7 @@ package com.urlshortener.service;
 
 import com.urlshortener.exception.AliasAlreadyExistsException;
 import com.urlshortener.exception.AliasNotFoundException;
+import com.urlshortener.exception.TooManyCustomAliasGenerations;
 import com.urlshortener.model.UrlPair;
 import com.urlshortener.model.dto.ShortenUrlRequest;
 import com.urlshortener.model.dto.ShortenUrlResponse;
@@ -9,9 +10,12 @@ import com.urlshortener.model.dto.UrlListResponse;
 import com.urlshortener.repository.UrlPairRepository;
 import java.security.SecureRandom;
 import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Service
+@Transactional
 public class UrlPairService {
 
   private static final String URLCHARACTERS =
@@ -22,7 +26,10 @@ public class UrlPairService {
   private final String baseUrl;
   private final UrlPairRepository urlPairRepository;
 
-  public UrlPairService(int aliasLength, UrlPairRepository urlPairRepository, String baseUrl) {
+  public UrlPairService(
+      @Value("${url-shortener.alias.length}") int aliasLength,
+      UrlPairRepository urlPairRepository,
+      @Value("${url-shortener.base-url}") String baseUrl) {
     this.aliasLength = aliasLength;
     this.urlPairRepository = urlPairRepository;
     this.baseUrl = baseUrl;
@@ -61,7 +68,8 @@ public class UrlPairService {
       alias = result.toString();
       attempts++;
       if (attempts > 100) {
-        throw new RuntimeException("Unable to generate unique alias after 100 attempts");
+        throw new TooManyCustomAliasGenerations(
+            "Unable to generate unique alias after 100 attempts");
       }
     } while (urlPairRepository.existsByAlias(alias));
     return alias;
@@ -91,6 +99,6 @@ public class UrlPairService {
             urlPair ->
                 new UrlListResponse(
                     urlPair.getAlias(), urlPair.getUrl(), baseUrl + "/" + urlPair.getAlias()))
-        .collect(Collectors.toList());
+        .toList();
   }
 }

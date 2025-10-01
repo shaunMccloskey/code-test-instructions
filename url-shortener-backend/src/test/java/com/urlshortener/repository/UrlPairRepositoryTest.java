@@ -16,7 +16,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @DataMongoTest
 @Testcontainers
-public class UrlPairRepositoryTest {
+class UrlPairRepositoryTest {
 
   @Container static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:7.0");
 

@@ -21,11 +21,9 @@ FROM openjdk:17-jdk-slim
 
 WORKDIR /app
 
-# Install curl for health check
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Install curl for health check and create non-root user for security
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r appuser && useradd -r -g appuser appuser
 
 # Copy the jar file from the builder stage
 COPY --from=builder /app/target/*.jar app.jar
