@@ -10,7 +10,7 @@ public interface UrlPairRepository extends MongoRepository<UrlPair, String> {
 
   Optional<UrlPair> findByAlias(String alias);
 
-  boolean isExistingByAlias(String alias);
+  boolean existsByAlias(String alias);
 
   void deleteByAlias(String alias);
 }

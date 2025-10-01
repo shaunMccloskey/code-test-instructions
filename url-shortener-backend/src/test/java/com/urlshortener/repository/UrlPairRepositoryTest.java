@@ -38,4 +38,19 @@ public class UrlPairRepositoryTest {
 
     assertFalse(result.isPresent());
   }
+
+  @Test
+  void findByAlias_whenAliasExist_returnsUrlPair() {}
+
+  @Test
+  void existsByAlias_whenAliasDoesNotExist_returnFalse() {}
+
+  @Test
+  void existsByAlias_whenAliasExists_returnTrue() {}
+
+  @Test
+  void deleteByAlias_whenAliasDoesNotExist_will() {}
+
+  @Test
+  void deleteByAlias_whenAliasExists_deleteSucessfully() {}
 }
