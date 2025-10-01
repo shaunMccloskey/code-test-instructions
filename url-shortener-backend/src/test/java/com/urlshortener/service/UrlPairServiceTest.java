@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.urlshortener.exception.AliasNotFoundException;
 import com.urlshortener.model.UrlPair;
 import com.urlshortener.repository.UrlPairRepository;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class UrlPairServiceTest {
+class UrlPairServiceTest {
 
   @Mock private UrlPairRepository urlPairRepository;
 
@@ -64,23 +65,37 @@ public class UrlPairServiceTest {
 
   @Test
   void getUrlPairByAlias_whenAliasDoesNotExists_return() {
-    UrlPair urlPairExample = new UrlPair("test", "http://example.com");
-    when(urlPairRepository.findByAlias("test")).thenReturn(Optional.of(urlPairExample));
-    assertThrows(AliasNotFoundException.class, () -> urlPairService.getUrlPairByAlias("not_there"));
+    when(urlPairRepository.findByAlias("test")).thenReturn(Optional.empty());
+    assertThrows(AliasNotFoundException.class, () -> urlPairService.getUrlPairByAlias("test"));
   }
 
   @Test
   void deleteUrlPair_whenAliasExists_returnAlias() {
-    UrlPair urlPairExample = new UrlPair("test", "http://example.com");
-    when(urlPairRepository.findByAlias("test")).thenReturn(Optional.of(urlPairExample));
+    when(urlPairRepository.existsByAlias("test")).thenReturn(true);
     urlPairService.deleteUrlPair("test");
     verify(urlPairRepository).deleteByAlias("test");
   }
 
   @Test
   void deleteUrlPair_whenAliasDoesNotExists_return() {
-    UrlPair urlPairExample = new UrlPair("test", "http://example.com");
-    when(urlPairRepository.findByAlias("test")).thenReturn(Optional.of(urlPairExample));
+    when(urlPairRepository.existsByAlias("not_there")).thenReturn(false);
     assertThrows(AliasNotFoundException.class, () -> urlPairService.deleteUrlPair("not_there"));
+  }
+
+  @Test
+  void getAllUrls_whenAliasExist_returnFullList() {
+    List<UrlPair> urls =
+        List.of(
+            new UrlPair("first", "http://example.com"),
+            new UrlPair("second", "http://example.test.com"));
+    when(urlPairRepository.findAll()).thenReturn(urls);
+
+    List<UrlPair> result = urlPairService.getAllUrls();
+
+    assertEquals(2, result.size());
+    assertEquals("first", result.get(0).getAlias());
+    assertEquals("http://example.com", result.get(0).getUrl());
+    assertEquals("second", result.get(1).getAlias());
+    assertEquals("http://example.test.com", result.get(1).getUrl());
   }
 }
