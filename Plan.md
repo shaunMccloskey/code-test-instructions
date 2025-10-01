@@ -23,11 +23,18 @@ docker-compose.yml - builds the mongoDB, backend and front end, connect network 
 model - urlPair will store the alias and url 
 repository - will need to be able to pull object by alias, check pre existing alias as they must be unique and delete by alias.
 
-
-
+service -
+        | - shorten method to take in alias and url, if no alias given generate random alias,  check if alias is unique and save new alias
+        | - generateAlias method to generate random string
+        | - 
+Controller -
+           | - post shortener - call service to saveUrlPair 
+           | - get {alias} call service helper method
+           | - delete {alias} call service helper method
+           | - get /urls call service helper method return all urlPairs
 
 code quality and linters
-use spotless with google standards, add to the pom so that can run check to test if styleing matches and apply to update code to match standards.
+use spotless with google standards, add to the pom so that can run check to test if styling matches and apply to update code to match standards.
 added as pre commit hook to the project, any commits will auto run the check and fail if not matching.
 
 
