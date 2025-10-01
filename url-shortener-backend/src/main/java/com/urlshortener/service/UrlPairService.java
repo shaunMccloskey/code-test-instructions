@@ -3,6 +3,9 @@ package com.urlshortener.service;
 import com.urlshortener.exception.AliasAlreadyExistsException;
 import com.urlshortener.exception.AliasNotFoundException;
 import com.urlshortener.model.UrlPair;
+import com.urlshortener.model.dto.ShortenUrlRequest;
+import com.urlshortener.model.dto.ShortenUrlResponse;
+import com.urlshortener.model.dto.UrlListResponse;
 import com.urlshortener.repository.UrlPairRepository;
 import java.security.SecureRandom;
 import java.util.List;
@@ -16,23 +19,26 @@ public class UrlPairService {
   private static final SecureRandom RANDOM = new SecureRandom();
 
   private final int aliasLength;
+  private final String baseUrl;
   private final UrlPairRepository urlPairRepository;
 
-  public UrlPairService(int aliasLength, UrlPairRepository urlPairRepository) {
+  public UrlPairService(int aliasLength, UrlPairRepository urlPairRepository, String baseUrl) {
     this.aliasLength = aliasLength;
     this.urlPairRepository = urlPairRepository;
+    this.baseUrl = baseUrl;
   }
 
-  public String shortenUrl(String alias, String fullUrl) {
-    String customAlias = determineAlias(alias);
+  public ShortenUrlResponse shortenUrl(ShortenUrlRequest request) {
+    String customAlias = determineAlias(request.getCustomAlias());
 
-    if (urlPairRepository.existsByAlias(alias)) {
-      throw new AliasAlreadyExistsException(alias);
+    if (urlPairRepository.existsByAlias(customAlias)) {
+      throw new AliasAlreadyExistsException(customAlias);
     }
 
-    urlPairRepository.save(new UrlPair(customAlias, fullUrl));
+    urlPairRepository.save(new UrlPair(customAlias, request.getFullUrl()));
 
-    return customAlias;
+    String shortUrl = baseUrl + "/" + customAlias;
+    return new ShortenUrlResponse(shortUrl);
   }
 
   private String determineAlias(String customAlias) {
@@ -79,7 +85,12 @@ public class UrlPairService {
 
   //        | - get all urls
   @Transactional(readOnly = true)
-  public List<UrlPair> getAllUrls() {
-    return urlPairRepository.findAll().stream().collect(Collectors.toList());
+  public List<UrlListResponse> getAllUrls() {
+    return urlPairRepository.findAll().stream()
+        .map(
+            urlPair ->
+                new UrlListResponse(
+                    urlPair.getAlias(), urlPair.getUrl(), baseUrl + "/" + urlPair.getAlias()))
+        .collect(Collectors.toList());
   }
 }

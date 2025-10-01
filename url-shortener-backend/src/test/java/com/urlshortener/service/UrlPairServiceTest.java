@@ -5,6 +5,9 @@ import static org.mockito.Mockito.*;
 
 import com.urlshortener.exception.AliasNotFoundException;
 import com.urlshortener.model.UrlPair;
+import com.urlshortener.model.dto.ShortenUrlRequest;
+import com.urlshortener.model.dto.ShortenUrlResponse;
+import com.urlshortener.model.dto.UrlListResponse;
 import com.urlshortener.repository.UrlPairRepository;
 import java.util.List;
 import java.util.Optional;
@@ -23,36 +26,44 @@ class UrlPairServiceTest {
 
   private final int aliasLength = 6;
 
+  private final String baseUrl = "http://localhost:8080";
+
   @BeforeEach
   void setUp() {
-    urlPairService = new UrlPairService(aliasLength, urlPairRepository);
+    urlPairService = new UrlPairService(aliasLength, urlPairRepository, baseUrl);
   }
 
   @Test
   void shortenUrl_whenCustomAlias_returnAlias() {
-    String result = urlPairService.shortenUrl("testUrl", "https://example.com");
-    assertEquals("testUrl", result);
+    ShortenUrlRequest request = new ShortenUrlRequest("https://example.com", "custom");
+    ShortenUrlResponse result = urlPairService.shortenUrl(request);
+    assertEquals("http://localhost:8080/custom", result.getShortUrl());
   }
 
   @Test
   void shortenUrl_whenNullCustomAlias_returnAlias() {
+    ShortenUrlRequest request = new ShortenUrlRequest("https://example.com", null);
     when(urlPairRepository.existsByAlias(anyString())).thenReturn(false);
-    String result = urlPairService.shortenUrl(null, "https://example.com");
-    assertEquals(result.length(), aliasLength);
+    ShortenUrlResponse result = urlPairService.shortenUrl(request);
+    assertTrue(result.getShortUrl().contains(baseUrl));
+    assertEquals(result.getShortUrl().length(), baseUrl.length() + 7);
   }
 
   @Test
   void shortenUrl_whenEmptyCustomAlias_returnAlias() {
+    ShortenUrlRequest request = new ShortenUrlRequest("https://example.com", "");
     when(urlPairRepository.existsByAlias(anyString())).thenReturn(false);
-    String result = urlPairService.shortenUrl("", "https://example.com");
-    assertEquals(result.length(), aliasLength);
+    ShortenUrlResponse result = urlPairService.shortenUrl(request);
+    assertNotNull(result.getShortUrl());
+    assertTrue(result.getShortUrl().startsWith("http://localhost:8080/"));
+    verify(urlPairRepository).save(any(UrlPair.class));
   }
 
   @Test
   void shortenUrl_whenEmptyCustomAliasConflict_returnAlias() {
+    ShortenUrlRequest request = new ShortenUrlRequest("https://example.com", "");
     when(urlPairRepository.existsByAlias(anyString())).thenReturn(true);
-    assertThrows(
-        RuntimeException.class, () -> urlPairService.shortenUrl("", "https://example.com"));
+    assertThrows(RuntimeException.class, () -> urlPairService.shortenUrl(request));
   }
 
   @Test
@@ -90,12 +101,12 @@ class UrlPairServiceTest {
             new UrlPair("second", "http://example.test.com"));
     when(urlPairRepository.findAll()).thenReturn(urls);
 
-    List<UrlPair> result = urlPairService.getAllUrls();
+    List<UrlListResponse> result = urlPairService.getAllUrls();
 
     assertEquals(2, result.size());
     assertEquals("first", result.get(0).getAlias());
-    assertEquals("http://example.com", result.get(0).getUrl());
+    assertEquals("http://example.com", result.get(0).getFullUrl());
     assertEquals("second", result.get(1).getAlias());
-    assertEquals("http://example.test.com", result.get(1).getUrl());
+    assertEquals("http://localhost:8080/second", result.get(1).getShortUrl());
   }
 }
