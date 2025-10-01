@@ -17,7 +17,7 @@ public class UrlPairServiceTest {
 
   private UrlPairService urlPairService;
 
-  private int aliasLength = 6;
+  private final int aliasLength = 6;
 
   @BeforeEach
   void setUp() {
@@ -26,27 +26,28 @@ public class UrlPairServiceTest {
 
   @Test
   void shortenUrl_whenCustomAlias_returnAlias() {
-    String result = urlPairService.shortenUrl("testUrl");
+    String result = urlPairService.shortenUrl("testUrl", "https://example.com");
     assertEquals("testUrl", result);
   }
 
   @Test
   void shortenUrl_whenNullCustomAlias_returnAlias() {
     when(urlPairRepository.existsByAlias(anyString())).thenReturn(false);
-    String result = urlPairService.shortenUrl(null);
+    String result = urlPairService.shortenUrl(null, "https://example.com");
     assertEquals(result.length(), aliasLength);
   }
 
   @Test
   void shortenUrl_whenEmptyCustomAlias_returnAlias() {
     when(urlPairRepository.existsByAlias(anyString())).thenReturn(false);
-    String result = urlPairService.shortenUrl("");
+    String result = urlPairService.shortenUrl("", "https://example.com");
     assertEquals(result.length(), aliasLength);
   }
 
   @Test
   void shortenUrl_whenEmptyCustomAliasConflict_returnAlias() {
     when(urlPairRepository.existsByAlias(anyString())).thenReturn(true);
-    assertThrows(RuntimeException.class, () -> urlPairService.shortenUrl(""));
+    assertThrows(
+        RuntimeException.class, () -> urlPairService.shortenUrl("", "https://example.com"));
   }
 }

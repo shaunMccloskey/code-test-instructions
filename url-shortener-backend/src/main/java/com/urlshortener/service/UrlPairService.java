@@ -1,7 +1,12 @@
 package com.urlshortener.service;
 
+import com.urlshortener.exception.AliasAlreadyExistsException;
+import com.urlshortener.model.UrlPair;
 import com.urlshortener.repository.UrlPairRepository;
 import java.security.SecureRandom;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 public class UrlPairService {
 
@@ -17,13 +22,14 @@ public class UrlPairService {
     this.urlPairRepository = urlPairRepository;
   }
 
-  //    shorten method to take in alias and url, if no alias given generate random alias,  check if
-  // alias is unique and save new alias
-  public String shortenUrl(String alias) {
-    String customAlias = alias;
+  public String shortenUrl(String alias, String fullUrl) {
+    String customAlias;
     if (alias == null || alias.trim().isEmpty()) {
       customAlias = generateAlias();
+    } else {
+      customAlias = alias.trim();
     }
+    urlPairRepository.save(new UrlPair(customAlias, fullUrl));
 
     return customAlias;
   }
@@ -47,12 +53,22 @@ public class UrlPairService {
     return alias;
   }
 
-  //        | - generateAlias method to generate random string
   //        | - helper get url
-  //        | - helper delete url
-  //        | - get all urls
-  //        | - generate random alias
-  //
-  //
+  @Transactional(readOnly = true)
+  public UrlPair getUrlPairByAlias(String alias) {
+    return urlPairRepository
+        .findByAlias(alias)
+        .orElseThrow(() -> new AliasAlreadyExistsException(alias));
+  }
 
+  //        | - helper delete url
+  public void deleteUrlPair(String alias) {
+    urlPairRepository.deleteByAlias(alias);
+  }
+
+  //        | - get all urls
+  @Transactional(readOnly = true)
+  public List<UrlPair> getAllUrls() {
+    return urlPairRepository.findAll().stream().collect(Collectors.toList());
+  }
 }
