@@ -21,30 +21,32 @@ public class UrlPairServiceTest {
 
   @BeforeEach
   void setUp() {
-    urlPairService = new UrlPairService(aliasLength);
+    urlPairService = new UrlPairService(aliasLength, urlPairRepository);
   }
 
   @Test
   void shortenUrl_whenCustomAlias_returnAlias() {
     String result = urlPairService.shortenUrl("testUrl");
-    assertTrue(result.equals("testUrl"));
+    assertEquals("testUrl", result);
   }
 
   @Test
   void shortenUrl_whenNullCustomAlias_returnAlias() {
+    when(urlPairRepository.existsByAlias(anyString())).thenReturn(false);
     String result = urlPairService.shortenUrl(null);
     assertEquals(result.length(), aliasLength);
   }
 
   @Test
   void shortenUrl_whenEmptyCustomAlias_returnAlias() {
+    when(urlPairRepository.existsByAlias(anyString())).thenReturn(false);
     String result = urlPairService.shortenUrl("");
     assertEquals(result.length(), aliasLength);
   }
 
   @Test
   void shortenUrl_whenEmptyCustomAliasConflict_returnAlias() {
-    String result = urlPairService.shortenUrl("");
-    // TODO needs to check repo and loop until finds free value, how should it handel nothing free??
+    when(urlPairRepository.existsByAlias(anyString())).thenReturn(true);
+    assertThrows(RuntimeException.class, () -> urlPairService.shortenUrl(""));
   }
 }
