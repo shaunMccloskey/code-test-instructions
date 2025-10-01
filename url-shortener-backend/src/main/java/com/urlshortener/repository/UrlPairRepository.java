@@ -6,11 +6,11 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UrlPairRepository extends MongoRepository<UrlPair, long> {
+public interface UrlPairRepository extends MongoRepository<UrlPair, String> {
 
-  Optional<UrlPair> findById(long id);
+  Optional<UrlPair> findByAlias(String alias);
 
-  booelan isExistingByAlias(String alias);
+  boolean isExistingByAlias(String alias);
 
   void deleteByAlias(String alias);
 }
