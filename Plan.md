@@ -26,7 +26,10 @@ repository - will need to be able to pull object by alias, check pre existing al
 service -
         | - shorten method to take in alias and url, if no alias given generate random alias,  check if alias is unique and save new alias
         | - generateAlias method to generate random string
-        | - 
+        | - helper get url
+        | - helper delete url 
+        | - get all urls
+        | - generate random alias
 Controller -
            | - post shortener - call service to saveUrlPair 
            | - get {alias} call service helper method
